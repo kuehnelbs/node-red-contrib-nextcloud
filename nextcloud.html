@@ -1,0 +1,372 @@
+<script type="text/javascript">
+    RED.nodes.registerType('nextcloud-credentials', {
+        category: 'config',
+        defaults: {
+            cname: {value: '', required: false},
+            address: {value: 'https://your.server.com', required: true}
+        },
+		credentials: {
+        	user: {type:'text'},
+			pass: {type:'password'}
+     	},
+        label: function() {
+            if (this.cname.length) {
+                return this.cname + ' (' + this.address + ')'
+			}
+            return this.address
+        }
+    })
+</script>
+
+<script type="text/x-red" data-template-name="nextcloud-credentials">
+    <div class="form-row">
+        <label for="node-config-input-cname"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-cname">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-address"><i class="fa fa-server"></i> Server</label>
+        <input type="text" id="node-config-input-address">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-user"><i class="fa fa-server"></i> Username</label>
+        <input type="text" id="node-config-input-user">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-pass"><i class="fa fa-key"></i> Password</label>
+        <input type="password" id="node-config-input-pass">
+    </div>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('nextcloud-caldav', {
+        category: 'nextcloud',
+        color: '#0082c9',
+        paletteLabel: 'CalDAV',
+		defaults: {
+            nname: {value: ''},
+            server: {type: 'nextcloud-credentials', required: true},
+            calendar: {value: '', required: false}
+        },
+        inputs: 1,
+        outputs: 1,
+        outputLabels: ['stdout'],
+        icon: 'nextcloud.png',
+        label: function() {
+            return this.nname || 'Nextcloud CalDAV'
+        }
+    })
+</script>
+
+<script type="text/x-red" data-template-name="nextcloud-caldav">
+    <div class="form-row">
+        <label for="node-input-nname"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-nname" placeholder="Name">
+    </div>
+	<div class="form-row">
+    	<label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+    	<input type="text" id="node-input-server">
+	</div>
+	<div class="form-row">
+        <label for="node-input-calendar"><i class="fa fa-calendar"></i> Calendar</label>
+        <input type="text" id="node-input-calendar">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="nextcloud-caldav">
+	<p>Connects to a Nextcloud server and downloads calendar entries (ics)</p>
+
+	<h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">any</span>
+        </dt>
+        <dd> Incoming message triggers download of calendar items. Any payload is possible. </dd>
+        <dt class="optional">calendar <span class="property-type">string</span></dt>
+        <dd> Calendar can be specified on incoming message or in nodes properties (expects displayname
+        of calendar - the name of the calendar as shown in nextcloud calendar app). Downloads
+        calendar items from all calendars if not set.</dd>
+    </dl>
+
+	<h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">Object</span>
+        </dt>
+        <dd> Outputs one message for each calendar. Output payload is an object with two keys:</dd>
+        <dt class="optional">name <span class="property-type">string</span></dt>
+        <dd> The name of the calendar</dd>
+        <dt class="optional">data <span class="property-type">Array of objects</span></dt>
+        <dd> Each calendar entry is an ics parsed to a JSON object</dd>
+    </dl>
+</script>
+
+
+
+<script type="text/javascript">
+    RED.nodes.registerType('nextcloud-carddav', {
+        category: 'nextcloud',
+        color: '#0082c9',
+        paletteLabel: 'CardDAV',
+        defaults: {
+            rname: {value: ''},
+            server: {type: 'nextcloud-credentials', required: true},
+            addressBook: {value: '', required: false}
+        },
+        inputs: 1,
+        outputs: 1,
+        outputLabels: ['stdout'],
+        icon: 'nextcloud.png',
+        label: function() {
+            return this.rname || 'Nextcloud CardDAV'
+        }
+    })
+</script>
+
+<script type="text/x-red" data-template-name="nextcloud-carddav">
+    <div class="form-row">
+        <label for="node-input-rname"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-rname" placeholder="Name">
+    </div>
+	<div class="form-row">
+    	<label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+    	<input type="text" id="node-input-server">
+	</div>
+	<div class="form-row">
+        <label for="node-input-addressBook"><i class="fa fa-address-book"></i> Address Book</label>
+        <input type="text" id="node-input-addressBook">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="nextcloud-carddav">
+	<p>Connects to a Nextcloud server and downloads addressbook entries (vcf)</p>
+
+	<h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">any</span>
+        </dt>
+        <dd> Incoming message triggers download of addressbook items. Any payload is possible. </dd>
+        <dt class="optional">calendar <span class="property-type">string</span></dt>
+        <dd> Adressbook can be specified on incoming message or in nodes properties (expects displayname
+        of addressbook - the name of the addressbook as shown in nextcloud contacts app). Downloads
+        addressbook items from all addressbooks if not set.</dd>
+    </dl>
+
+	<h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">Object</span>
+        </dt>
+        <dd> Outputs one message for each addressbook. Output payload is an object with two keys:</dd>
+        <dt class="optional">name <span class="property-type">string</span></dt>
+        <dd> The name of the addressbook</dd>
+        <dt class="optional">data <span class="property-type">Array of objects</span></dt>
+        <dd> Each addressbook entry is an vcf parsed to a JSON object</dd>
+    </dl>
+</script>
+
+
+<script type="text/javascript">
+    RED.nodes.registerType('nextcloud-webdav-list', {
+        category: 'nextcloud',
+        color: '#0082c9',
+        paletteLabel: 'WebDAV list',
+        defaults: {
+            wname: {value: ''},
+            server: {type: 'nextcloud-credentials', required: true},
+            directory: {value: '', required: false}
+        },
+        inputs: 1,
+        outputs: 1,
+        outputLabels: ['stdout'],
+        icon: 'nextcloud.png',
+        label: function() {
+            return this.wname || 'Nextcloud WebDAV List'
+        }
+    })
+</script>
+
+<script type="text/x-red" data-template-name="nextcloud-webdav-list">
+    <div class="form-row">
+        <label for="node-input-wname"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-wname" placeholder="Name">
+    </div>
+	<div class="form-row">
+    	<label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+    	<input type="text" id="node-input-server">
+	</div>
+	<div class="form-row">
+        <label for="node-input-directory"><i class="fa fa-sitemap"></i> Directory</label>
+        <input type="text" id="node-input-directory">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="nextcloud-webdav-list">
+	<p>Connects to a Nextcloud server and lists directory content of a given path)</p>
+
+	<h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">any</span>
+        </dt>
+        <dd> Incoming message triggers receiving a list containing a directory content. Any payload
+        is possible. </dd>
+        <dt class="optional">directory <span class="property-type">string</span></dt>
+        <dd> A directory can be specified on incoming message or in nodes properties. Downloads the
+        content of the users root directory if not set.</dd>
+    </dl>
+
+	<h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">Array</span>
+        </dt>
+        <dd> Output payload is an array of objects (one object for each directory or file entry</dd>
+        <dt class="optional">filename <span class="property-type">string</span></dt>
+        <dd> full path and filename</dd>
+		<dt class="optional">basename <span class="property-type">string</span></dt>
+        <dd> filename without path</dd>
+        <dt class="optional">lastmod <span class="property-type">string</span></dt>
+        <dd> Last modified data, e.g. "Sun, 29 Apr 2018 10:57:57 GMT"</dd>
+        <dt class="optional">size <span class="property-type">number</span></dt>
+        <dd> File size in Bytes</dd>
+        <dt class="optional">type <span class="property-type">string</span></dt>
+        <dd> Type of entry, e.g "file" or "directory"</dd>
+        <dt class="optional">mime <span class="property-type">string</span></dt>
+        <dd> Mime type, e.g. "image/svg+xml"</dd>
+    </dl>
+</script>
+
+
+<script type="text/javascript">
+    RED.nodes.registerType('nextcloud-webdav-out', {
+        category: 'nextcloud',
+        color: '#0082c9',
+        paletteLabel: 'WebDAV out',
+        defaults: {
+            wname: {value: ''},
+            server: {type: 'nextcloud-credentials', required: true},
+            filename: {value: '', required: false}
+        },
+        inputs: 1,
+        outputs: 1,
+        outputLabels: ['stdout'],
+        icon: 'nextcloud.png',
+        label: function() {
+            return this.wname || 'Nextcloud WebDAV Out'
+        }
+    })
+</script>
+
+<script type="text/x-red" data-template-name="nextcloud-webdav-out">
+    <div class="form-row">
+        <label for="node-input-wname"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-wname" placeholder="Name">
+    </div>
+	<div class="form-row">
+    	<label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+    	<input type="text" id="node-input-server">
+	</div>
+	<div class="form-row">
+        <label for="node-input-filename"><i class="fa fa-sitemap"></i> Filename</label>
+        <input type="text" id="node-input-filename">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="nextcloud-webdav-out">
+	<p>Connects to a Nextcloud server and downloads a file and sends it to the output</p>
+
+	<h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">any</span>
+        </dt>
+        <dd> Incoming message triggers receiving a list containing a directory content. Any payload
+        is possible. </dd>
+        <dt class="optional">filename <span class="property-type">string</span></dt>
+        <dd> The filename must be absolute to the users server root path.</dd>
+    </dl>
+
+	<h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">Binary buffer</span>
+        </dt>
+        <dd> Output payload is an binary buffer. The output can be connected to a file node and written
+        to file system</dd>
+    </dl>
+</script>
+
+
+<script type="text/javascript">
+    RED.nodes.registerType('nextcloud-webdav-in', {
+        category: 'nextcloud',
+        color: '#0082c9',
+        paletteLabel: 'WebDAV in',
+        defaults: {
+            uname: {value: ''},
+            server: {type: 'nextcloud-credentials', required: true},
+            filename: {value: '', required: false},
+            directory: {value: '', required: false}
+        },
+        inputs: 1,
+        outputs: 1,
+        outputLabels: ['stdout'],
+        icon: 'nextcloud.png',
+        label: function() {
+            return this.uname || 'Nextcloud WebDAV In'
+        }
+    })
+</script>
+
+<script type="text/x-red" data-template-name="nextcloud-webdav-in">
+    <div class="form-row">
+        <label for="node-input-uname"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-uname" placeholder="Name">
+    </div>
+	<div class="form-row">
+    	<label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+    	<input type="text" id="node-input-server">
+	</div>
+	<div class="form-row">
+        <label for="node-input-filename"><i class="fa fa-file"></i> Filename</label>
+        <input type="text" id="node-input-filename">
+    </div>
+	<div class="form-row">
+        <label for="node-input-directory"><i class="fa fa-sitemap"></i> Directory</label>
+        <input type="text" id="node-input-directory">
+    </div>
+    <div class="form-tips"><b>Tip:</b> The filename should be an absolute path, otherwise it will
+    	be relative to the working directory of the Node-RED process.</div>
+</script>
+
+<script type="text/x-red" data-help-name="nextcloud-webdav-in">
+	<p>Connects to a Nextcloud server and uploads a file to a given directory</p>
+
+	<h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">any</span>
+        </dt>
+        <dd> Incoming message triggers receiving a list containing a directory content. Any payload
+        is possible. </dd>
+        <dt class="optional">filename <span class="property-type">string</span></dt>
+        <dd> The filename should be an absolute path, otherwise it will be relative to the working
+        directory of the Node-RED process.</dd>
+        <dt class="optional">directory <span class="property-type">string</span></dt>
+        <dd> A directory can be specified on incoming message or in nodes properties. Uploads the
+        file to the users root directory if not set.</dd>
+    </dl>
+
+	<h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">Object</span>
+        </dt>
+        <dd> Output payload is an object </dd>
+        <dt class="optional">size <span class="property-type">number</span></dt>
+        <dd> Should be 0 in case of success </dd>
+		<dt class="optional">timeout <span class="property-type">number</span></dt>
+        <dd> Should be 0 in case of success</dd>
+    </dl>
+</script>
