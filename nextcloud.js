@@ -134,11 +134,14 @@ module.exports = function(RED) {
         node.on('input', function(msg) {
             const webDavUri = node.server.address + '/remote.php/webdav/'
             const client = webdav(webDavUri, node.server.credentials.user, node.server.credentials.pass)
-            let directory = '/'
-            if (node.directory && node.directory.length) {
-                directory += node.directory + '/'
-                directory = directory.replace('//', '/')
+            let directory = ''
+            if (msg.directory) {
+                directory = '/' + msg.directory
+            } else if (node.directory && node.directory.length) {
+                directory = '/' + node.directory
             }
+            directory = directory.replace('//', '/')
+
             client.getDirectoryContents(directory)
                 .then(function (contents) {
                     node.send({'payload': contents})
@@ -159,6 +162,7 @@ module.exports = function(RED) {
         node.on('input', function(msg) {
             const webDavUri = node.server.address + '/remote.php/webdav/'
             const client = webdav(webDavUri, node.server.credentials.user, node.server.credentials.pass)
+            let filename = ''
             if (msg.filename) {
                 filename = '/' + msg.filename
             } else if (node.filename && node.filename.length) {
