@@ -172,7 +172,7 @@ module.exports = function(RED) {
                 return
             }
             filename = filename.replace('//', '/')
-            node.warn(filename)
+
             client.getFileContents(filename)
                 .then(function (contents) {
                     node.send({'payload': contents})
