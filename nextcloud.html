@@ -3,7 +3,8 @@
         category: 'config',
         defaults: {
             cname: {value: '', required: false},
-            address: {value: 'https://your.server.com', required: true}
+            address: {value: 'https://your.server.com', required: true},
+            insecure: {value: '', required: false}
         },
 		credentials: {
         	user: {type:'text'},
@@ -26,6 +27,12 @@
     <div class="form-row">
         <label for="node-config-input-address"><i class="fa fa-server"></i> Server</label>
         <input type="text" id="node-config-input-address">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-insecure"><i class="fa fa-server"></i> Security</label>
+        <input type="checkbox" value="1" id="node-config-input-insecure"
+        	style="display: inline-block; width: auto; vertical-align: top">
+        	<span style="width: 70%">Accept self signed certificates</span>
     </div>
     <div class="form-row">
         <label for="node-config-input-user"><i class="fa fa-server"></i> Username</label>

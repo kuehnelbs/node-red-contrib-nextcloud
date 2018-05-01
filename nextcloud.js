@@ -6,6 +6,7 @@ module.exports = function(RED) {
     function NextcloudConfigNode(n) {
         RED.nodes.createNode(this, n)
         this.address = n.address
+        this.insecure = n.insecure
     }
     RED.nodes.registerType('nextcloud-credentials', NextcloudConfigNode, {
         credentials: {
@@ -140,9 +141,13 @@ module.exports = function(RED) {
             } else if (node.directory && node.directory.length) {
                 directory = '/' + node.directory
             }
+            // check option for self signed certs
+            const option = {}
+            if (node.server.insecure) {
+                option.agent = new https.Agent({ rejectUnauthorized: false })
+            }
             directory = directory.replace('//', '/')
-
-            client.getDirectoryContents(directory)
+            client.getDirectoryContents(directory, option)
                 .then(function (contents) {
                     node.send({'payload': contents})
                 }, function (error) {
@@ -172,8 +177,12 @@ module.exports = function(RED) {
                 return
             }
             filename = filename.replace('//', '/')
-
-            client.getFileContents(filename)
+            // check option for self signed certs
+            const option = {}
+            if (node.server.insecure) {
+                option.agent = new https.Agent({ rejectUnauthorized: false })
+            }
+            client.getFileContents(filename, option)
                 .then(function (contents) {
                     node.send({'payload': contents})
                 }, function (error) {
@@ -207,11 +216,14 @@ module.exports = function(RED) {
                 directory += node.directory + '/'
             }
             directory = directory.replace('//', '/')
-
             const webDavUri = node.server.address + '/remote.php/webdav/'
             const client = webdav(webDavUri, node.server.credentials.user, node.server.credentials.pass)
-
-            client.putFileContents(directory + name, file, { format: 'binary' })
+            // check option for self signed certs
+            const option = {}
+            if (node.server.insecure) {
+                option.agent = new https.Agent({ rejectUnauthorized: false })
+            }
+            client.putFileContents(directory + name, file, { format: 'binary' }, option)
                 .then(function(contents) {
                     console.log(contents)
                     node.send({'payload': JSON.parse(contents)})
