@@ -47,8 +47,6 @@ module.exports = function (RED) {
                                 .then(function (calendarEntries) {
                                     let icsList = { 'payload': { 'name': calendar.displayName, 'data': [] } }
                                     calendarEntries.forEach(function (calendarEntry) {
-                                        node.warn(calendarEntry.calendarData);
-                                        node.warn(JSON.stringify(calendarEntry.calendarData.split('\n')));
                                         try {
                                             let jCalData = ICAL.parse(calendarEntry.calendarData);
                                             let component = new ICAL.Component(jCalData);
