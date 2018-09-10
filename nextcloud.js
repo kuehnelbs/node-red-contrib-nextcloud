@@ -1,7 +1,8 @@
-module.exports = function(RED) {
+module.exports = function (RED) {
     let dav = require('dav')
     let webdav = require('webdav')
     const fs = require('fs')
+    const ICAL = require('ical.js');
 
     function NextcloudConfigNode(n) {
         RED.nodes.createNode(this, n)
@@ -9,8 +10,8 @@ module.exports = function(RED) {
     }
     RED.nodes.registerType('nextcloud-credentials', NextcloudConfigNode, {
         credentials: {
-            user: {type: 'text'},
-            pass: {type: 'password'}
+            user: { type: 'text' },
+            pass: { type: 'password' }
         }
     })
 
@@ -20,8 +21,8 @@ module.exports = function(RED) {
         this.calendar = n.calendar
         let node = this
 
-        node.on('input', function(msg) {
-            const xhr = new dav.transport.Basic (
+        node.on('input', function (msg) {
+            const xhr = new dav.transport.Basic(
                 new dav.Credentials({
                     username: node.server.credentials.user,
                     password: node.server.credentials.pass
@@ -32,35 +33,39 @@ module.exports = function(RED) {
             // User
             calDavUri += node.server.credentials.user + '/'
             dav.createAccount({ server: calDavUri, xhr: xhr })
-                .then(function(account) {
+                .then(function (account) {
                     if (!account.calendars) {
                         node.error('Nextcloud:CalDAV -> no calendars found.')
                         return
                     }
                     // account instanceof dav.Account
-                    account.calendars.forEach(function(calendar) {
+                    account.calendars.forEach(function (calendar) {
                         // Wenn Kalender gesetzt ist, dann nur diesen abrufen
                         let c = msg.calendar || node.calendar
                         if (!c || !c.length || (c && c.length && c === calendar.displayName)) {
                             dav.listCalendarObjects(calendar, { xhr: xhr })
-                                .then(function(calendarEntries) {
-                                    let icsList = {'payload': {'name': calendar.displayName, 'data': []}}
-                                    calendarEntries.forEach(function(calendarEntry) {
-                                        const keyValue = calendarEntry.calendarData.split('\n')
-                                        let icsJson = {}
-                                        for (let x = 0; x < keyValue.length; x++) {
-                                            const temp = keyValue[x].split(':')
-                                            icsJson[temp[0]] = temp[1]
+                                .then(function (calendarEntries) {
+                                    let icsList = { 'payload': { 'name': calendar.displayName, 'data': [] } }
+                                    calendarEntries.forEach(function (calendarEntry) {
+                                        node.warn(calendarEntry.calendarData);
+                                        node.warn(JSON.stringify(calendarEntry.calendarData.split('\n')));
+                                        try {
+                                            let jCalData = ICAL.parse(calendarEntry.calendarData);
+                                            let component = new ICAL.Component(jCalData);
+                                            let vevent = component.getFirstSubcomponent('vevent');
+                                            var event = new ICAL.Event(vevent);
+                                            icsList.payload.data.push(event);
+                                        } catch (error) {
+                                            node.error("Error parsing calendar data: " + error);
                                         }
-                                        icsList.payload.data.push(icsJson)
                                     })
                                     node.send(icsList)
-                                }, function(){
+                                }, function () {
                                     node.error('Nextcloud:CalDAV -> get ics went wrong.')
                                 })
                         }
                     })
-                }, function(){
+                }, function () {
                     node.error('Nextcloud:CalDAV -> get calendars went wrong.')
                 })
         })
@@ -74,8 +79,8 @@ module.exports = function(RED) {
         this.addressBook = n.addressBook
         let node = this
 
-        node.on('input', function(msg) {
-            const xhr = new dav.transport.Basic (
+        node.on('input', function (msg) {
+            const xhr = new dav.transport.Basic(
                 new dav.Credentials({
                     username: node.server.credentials.user,
                     password: node.server.credentials.pass
@@ -86,22 +91,22 @@ module.exports = function(RED) {
             let cardDavUri = node.server.address + '/remote.php/dav/addressbooks/users/'
             // User
             cardDavUri += node.server.credentials.user + '/'
-// ToDo Filter ?
+            // ToDo Filter ?
             dav.createAccount({ server: cardDavUri, xhr: xhr, accountType: 'carddav' })
-                .then(function(account) {
+                .then(function (account) {
                     if (!account.addressBooks) {
                         node.error('Nextcloud:CardDAV -> no addressbooks found.')
                         return
                     }
                     // account instanceof dav.Account
-                    account.addressBooks.forEach(function(addressBook) {
+                    account.addressBooks.forEach(function (addressBook) {
                         // Wenn Adressbuch gesetzt ist, dann nur diesen abrufen
                         let c = msg.addressBook || node.addressBook
                         if (!c || !c.length || (c && c.length && c === addressBook.displayName)) {
                             dav.listVCards(addressBook, { xhr: xhr })
-                                .then(function(addressBookEntries) {
-                                    let vcfList = {'payload': {'name': addressBook.displayName, 'data': []}}
-                                    addressBookEntries.forEach(function(addressBookEntry) {
+                                .then(function (addressBookEntries) {
+                                    let vcfList = { 'payload': { 'name': addressBook.displayName, 'data': [] } }
+                                    addressBookEntries.forEach(function (addressBookEntry) {
                                         const keyValue = addressBookEntry.addressData.split('\n')
                                         let vcfJson = {}
                                         for (let x = 0; x < keyValue.length; x++) {
@@ -111,12 +116,12 @@ module.exports = function(RED) {
                                         vcfList.payload.data.push(vcfJson)
                                     })
                                     node.send(vcfList)
-                                }, function(){
+                                }, function () {
                                     node.error('Nextcloud:CardDAV -> get cards went wrong.')
                                 })
                         }
                     })
-                }, function(){
+                }, function () {
                     node.error('Nextcloud:CardDAV -> get addressBooks went wrong.')
                 })
 
@@ -131,7 +136,7 @@ module.exports = function(RED) {
         this.directory = n.directory
         let node = this
 
-        node.on('input', function(msg) {
+        node.on('input', function (msg) {
             const webDavUri = node.server.address + '/remote.php/webdav/'
             const client = webdav(webDavUri, node.server.credentials.user, node.server.credentials.pass)
             let directory = ''
@@ -144,7 +149,7 @@ module.exports = function(RED) {
 
             client.getDirectoryContents(directory)
                 .then(function (contents) {
-                    node.send({'payload': contents})
+                    node.send({ 'payload': contents })
                 }, function (error) {
                     node.error('Nextcloud:WebDAV -> get directory content went wrong.' + JSON.stringify(error))
                 })
@@ -159,7 +164,7 @@ module.exports = function(RED) {
         this.filename = n.filename
         let node = this
 
-        node.on('input', function(msg) {
+        node.on('input', function (msg) {
             const webDavUri = node.server.address + '/remote.php/webdav/'
             const client = webdav(webDavUri, node.server.credentials.user, node.server.credentials.pass)
             let filename = ''
@@ -175,7 +180,7 @@ module.exports = function(RED) {
             node.warn(filename)
             client.getFileContents(filename)
                 .then(function (contents) {
-                    node.send({'payload': contents})
+                    node.send({ 'payload': contents })
                 }, function (error) {
                     node.error('Nextcloud:WebDAV -> get file went wrong.' + JSON.stringify(error))
                 })
@@ -191,7 +196,7 @@ module.exports = function(RED) {
         this.filename = n.filename
         let node = this
 
-        node.on('input', function(msg) {
+        node.on('input', function (msg) {
             // Read upload file
             let filename = node.filename
             if (msg.filename) {
@@ -212,10 +217,10 @@ module.exports = function(RED) {
             const client = webdav(webDavUri, node.server.credentials.user, node.server.credentials.pass)
 
             client.putFileContents(directory + name, file, { format: 'binary' })
-                .then(function(contents) {
+                .then(function (contents) {
                     console.log(contents)
-                    node.send({'payload': JSON.parse(contents)})
-                }, function() {
+                    node.send({ 'payload': JSON.parse(contents) })
+                }, function () {
                     node.error('Nextcloud:WebDAV -> send file went wrong.')
                 })
         })
