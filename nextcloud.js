@@ -20,11 +20,28 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, n)
     this.server = RED.nodes.getNode(n.server)
     this.calendar = n.calendar
-    this.future = n.future || true
+    this.pastWeeks = n.pastWeeks || 0
     this.futureWeeks = n.futureWeeks || 4
     const node = this
 
     node.on('input', (msg) => {
+      let startDate = moment().startOf('day').subtract(this.pastWeeks, 'weeks').format('YYYYMMDD[T]HHmmss[Z]')
+      let endDate = moment().startOf('day').add(this.futureWeeks, 'weeks').format('YYYYMMDD[T]HHmmss[Z]')
+      const filters = [{
+        type: 'comp-filter',
+        attrs: { name: 'VCALENDAR' },
+        children: [{
+          type: 'comp-filter',
+          attrs: { name: 'VEVENT' },
+          children: [{
+            type: 'time-range',
+            attrs: {
+              start: startDate,
+              end: endDate
+            }
+          }]
+        }]
+      }]
       // dav.debug.enabled = true;
       const xhr = new dav.transport.Basic(
         new dav.Credentials({
@@ -47,7 +64,7 @@ module.exports = function (RED) {
             // Wenn Kalender gesetzt ist, dann nur diesen abrufen
             let c = msg.calendar || node.calendar
             if (!c || !c.length || (c && c.length && c === calendar.displayName)) {
-              dav.listCalendarObjects(calendar, { xhr: xhr })
+              dav.listCalendarObjects(calendar, { xhr: xhr, filters: filters })
                 .then(function (calendarEntries) {
                   let icsList = { 'payload': { 'name': calendar.displayName, 'data': [] } }
                   calendarEntries.forEach(function (calendarEntry) {

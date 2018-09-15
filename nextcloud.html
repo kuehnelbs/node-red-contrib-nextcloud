@@ -46,8 +46,8 @@
             nname: {value: ''},
             server: {type: 'nextcloud-credentials', required: true},
             calendar: {value: '', required: false},
-            future: { type: 'bool', value: true, required: true},
-            futureWeeks: { type: 'num', default: 4 }
+            pastWeeks: { type: 'num', value: 0, required: true},
+            futureWeeks: { type: 'num', default: 4, required: true }
         },
         inputs: 1,
         outputs: 1,
@@ -73,11 +73,11 @@
         <input type="text" id="node-input-calendar">
     </div>
     <div class="form-row">
-        <label for="node-input-future"><i class="fa fa-check-square"></i> Only future events?</label>
-        <input type="checkbox" id="node-input-future">
+        <label for="node-input-pastWeeks"><i class="fa fa-check-square"></i> Past weeks to sync</label>
+        <span class="ui-spinner ui-widget ui-widget-content ui-corner-all"><input type="number" id="node-input-pastWeeks"></span>
     </div>
     <div class="form-row">
-        <label for="node-input-futureWeeks"><i class="fa fa-random"></i> Weeks to sync</label>
+        <label for="node-input-futureWeeks"><i class="fa fa-random"></i> Upcoming weeks to sync</label>
         <span class="ui-spinner ui-widget ui-widget-content ui-corner-all"><input type="number" id="node-input-futureWeeks"></span>
     </div>
 </script>
