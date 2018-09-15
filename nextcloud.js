@@ -5,9 +5,9 @@ module.exports = function (RED) {
   const ICAL = require('ical.js')
   const moment = require('moment')
 
-  function NextcloudConfigNode (n) {
-    RED.nodes.createNode(this, n)
-    this.address = n.address
+  function NextcloudConfigNode (config) {
+    RED.nodes.createNode(this, config)
+    this.address = config.address
   }
   RED.nodes.registerType('nextcloud-credentials', NextcloudConfigNode, {
     credentials: {
@@ -16,12 +16,12 @@ module.exports = function (RED) {
     }
   })
 
-  function NextcloudCalDav (n) {
-    RED.nodes.createNode(this, n)
-    this.server = RED.nodes.getNode(n.server)
-    this.calendar = n.calendar
-    this.pastWeeks = n.pastWeeks || 0
-    this.futureWeeks = n.futureWeeks || 4
+  function NextcloudCalDav (config) {
+    RED.nodes.createNode(this, config)
+    this.server = RED.nodes.getNode(config.server)
+    this.calendar = config.calendar
+    this.pastWeeks = config.pastWeeks || 0
+    this.futureWeeks = config.futureWeeks || 4
     const node = this
 
     node.on('input', (msg) => {
@@ -106,10 +106,10 @@ module.exports = function (RED) {
   }
   RED.nodes.registerType('nextcloud-caldav', NextcloudCalDav)
 
-  function NextcloudCardDav (n) {
-    RED.nodes.createNode(this, n)
-    this.server = RED.nodes.getNode(n.server)
-    this.addressBook = n.addressBook
+  function NextcloudCardDav (config) {
+    RED.nodes.createNode(this, config)
+    this.server = RED.nodes.getNode(config.server)
+    this.addressBook = config.addressBook
     const node = this
 
     node.on('input', (msg) => {
@@ -161,10 +161,10 @@ module.exports = function (RED) {
   }
   RED.nodes.registerType('nextcloud-carddav', NextcloudCardDav)
 
-  function NextcloudWebDavList (n) {
-    RED.nodes.createNode(this, n)
-    this.server = RED.nodes.getNode(n.server)
-    this.directory = n.directory
+  function NextcloudWebDavList (config) {
+    RED.nodes.createNode(this, config)
+    this.server = RED.nodes.getNode(config.server)
+    this.directory = config.directory
     const node = this
 
     node.on('input', (msg) => {
@@ -188,10 +188,10 @@ module.exports = function (RED) {
   }
   RED.nodes.registerType('nextcloud-webdav-list', NextcloudWebDavList)
 
-  function NextcloudWebDavOut (n) {
-    RED.nodes.createNode(this, n)
-    this.server = RED.nodes.getNode(n.server)
-    this.filename = n.filename
+  function NextcloudWebDavOut (config) {
+    RED.nodes.createNode(this, config)
+    this.server = RED.nodes.getNode(config.server)
+    this.filename = config.filename
     const node = this
 
     node.on('input', (msg) => {
@@ -218,11 +218,11 @@ module.exports = function (RED) {
   }
   RED.nodes.registerType('nextcloud-webdav-out', NextcloudWebDavOut)
 
-  function NextcloudWebDavIn (n) {
-    RED.nodes.createNode(this, n)
-    this.server = RED.nodes.getNode(n.server)
-    this.directory = n.directory
-    this.filename = n.filename
+  function NextcloudWebDavIn (config) {
+    RED.nodes.createNode(this, config)
+    this.server = RED.nodes.getNode(config.server)
+    this.directory = config.directory
+    this.filename = config.filename
     const node = this
 
     node.on('input', (msg) => {
