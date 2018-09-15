@@ -23,6 +23,7 @@ module.exports = function (RED) {
     this.pastWeeks = config.pastWeeks || 0
     this.futureWeeks = config.futureWeeks || 4
     const node = this
+    node.warn('Node init')
 
     node.on('input', (msg) => {
       let startDate = moment().startOf('day').subtract(this.pastWeeks, 'weeks').format('YYYYMMDD[T]HHmmss[Z]')
@@ -53,7 +54,7 @@ module.exports = function (RED) {
       let calDavUri = node.server.address + '/remote.php/dav/calendars/'
       // User
       calDavUri += node.server.credentials.user + '/'
-      dav.createAccount({ server: calDavUri, xhr: xhr, loadCollections: true, loadObjects: false })
+      dav.createAccount({ server: calDavUri, xhr: xhr, loadCollections: true, loadObjects: true })
         .then(function (account) {
           if (!account.calendars) {
             node.error('Nextcloud:CalDAV -> no calendars found.')
@@ -62,8 +63,8 @@ module.exports = function (RED) {
           // account instanceof dav.Account
           account.calendars.forEach(function (calendar) {
             // Wenn Kalender gesetzt ist, dann nur diesen abrufen
-            let c = msg.calendar || node.calendar
-            if (!c || !c.length || (c && c.length && c === calendar.displayName)) {
+            let calName = msg.calendar || node.calendar
+            if (!calName || !calName.length || (calName && calName.length && calName === calendar.displayName)) {
               dav.listCalendarObjects(calendar, { xhr: xhr, filters: filters })
                 .then(function (calendarEntries) {
                   let icsList = { 'payload': { 'name': calendar.displayName, 'data': [] } }
