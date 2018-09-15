@@ -20,6 +20,8 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, n)
         this.server = RED.nodes.getNode(n.server)
         this.calendar = n.calendar
+        this.future = n.future || true;
+        this.futureWeeks = n.futureWeeks || 4;
         let node = this
 
         node.on('input', function (msg) {
