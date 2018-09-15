@@ -3,6 +3,7 @@ module.exports = function (RED) {
     let webdav = require('webdav')
     const fs = require('fs')
     const ICAL = require('ical.js');
+    let moment = require('moment');
 
     function NextcloudConfigNode(n) {
         RED.nodes.createNode(this, n)
@@ -22,6 +23,8 @@ module.exports = function (RED) {
         let node = this
 
         node.on('input', function (msg) {
+
+            //dav.debug.enabled = true;
             const xhr = new dav.transport.Basic(
                 new dav.Credentials({
                     username: node.server.credentials.user,
@@ -32,7 +35,7 @@ module.exports = function (RED) {
             let calDavUri = node.server.address + '/remote.php/dav/calendars/'
             // User
             calDavUri += node.server.credentials.user + '/'
-            dav.createAccount({ server: calDavUri, xhr: xhr })
+            dav.createAccount({ server: calDavUri, xhr: xhr, loadCollections: true, loadObjects: false })
                 .then(function (account) {
                     if (!account.calendars) {
                         node.error('Nextcloud:CalDAV -> no calendars found.')
@@ -52,12 +55,12 @@ module.exports = function (RED) {
                                             let component = new ICAL.Component(jCalData);
                                             let vevent = component.getFirstSubcomponent('vevent');
                                             var event = new ICAL.Event(vevent);
-                                            icsList.payload.data.push(event);
+                                            icsList.payload.data.push(convertEvent(event));
                                         } catch (error) {
                                             node.error("Error parsing calendar data: " + error);
                                         }
                                     })
-                                    node.send(icsList)
+                                    node.send(icsList);
                                 }, function () {
                                     node.error('Nextcloud:CalDAV -> get ics went wrong.')
                                 })
@@ -67,6 +70,21 @@ module.exports = function (RED) {
                     node.error('Nextcloud:CalDAV -> get calendars went wrong.')
                 })
         })
+
+        function convertEvent(event) {
+            let retVal = {};
+            retVal.start = event.startDate.toString();
+            retVal.end = event.endDate.toString();
+            retVal.summary = event.summary || '';
+            retVal.description = event.description || '';
+            retVal.attendees = event.attendees;
+            retVal.duration = event.duration;
+            retVal.location = event.location || '';
+            retVal.organizer = event.organizer || '';
+            retVal.uid = event.uid || '';
+            retVal.isRecurring = event.isRecurring();
+            return retVal;
+        }
     }
     RED.nodes.registerType('nextcloud-caldav', NextcloudCalDav)
 
