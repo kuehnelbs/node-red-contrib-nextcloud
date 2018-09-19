@@ -18,7 +18,7 @@
   ],
   "dependencies": {
     "dav": "^1.8.0",
-    "ical.js": "^1.2.2",
+    "ical-expander": "^2.0.0",
     "moment": "^2.22.2",
     "webdav": "^1.5.2"
   },

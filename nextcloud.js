@@ -2,7 +2,7 @@ module.exports = function (RED) {
   const dav = require('dav')
   const webdav = require('webdav')
   const fs = require('fs')
-  const ICAL = require('ical.js')
+  const IcalExpander = require('ical-expander')
   const moment = require('moment')
 
   function NextcloudConfigNode (config) {
@@ -22,13 +22,15 @@ module.exports = function (RED) {
     this.calendar = config.calendar
     this.pastWeeks = config.pastWeeks || 0
     this.futureWeeks = config.futureWeeks || 4
+    this.saveData = config.saveData || true
+    this.savedCalendars = {}
     const node = this
     node.warn('Node init')
 
     node.on('input', (msg) => {
-      let savedCalendars = this.context().global.get('owncloud/calendars') || {}
-      let startDate = moment().startOf('day').subtract(this.pastWeeks, 'weeks').format('YYYYMMDD[T]HHmmss[Z]')
-      let endDate = moment().startOf('day').add(this.futureWeeks, 'weeks').format('YYYYMMDD[T]HHmmss[Z]')
+      if (this.saveData) this.savedCalendars = this.context().global.get('nextcloud/calendars') || {}
+      let startDate = moment().startOf('day').subtract(this.pastWeeks, 'weeks')
+      let endDate = moment().endOf('day').add(this.futureWeeks, 'weeks')
       const filters = [{
         type: 'comp-filter',
         attrs: { name: 'VCALENDAR' },
@@ -38,8 +40,8 @@ module.exports = function (RED) {
           children: [{
             type: 'time-range',
             attrs: {
-              start: startDate,
-              end: endDate
+              start: startDate.format('YYYYMMDD[T]HHmmss[Z]'),
+              end: endDate.format('YYYYMMDD[T]HHmmss[Z]')
             }
           }]
         }]
@@ -68,21 +70,22 @@ module.exports = function (RED) {
             if (!calName || !calName.length || (calName && calName.length && calName === calendar.displayName)) {
               dav.listCalendarObjects(calendar, { xhr: xhr, filters: filters })
                 .then(function (calendarEntries) {
-                  let icsList = { 'payload': { 'name': calendar.displayName, 'data': [] } }
+                  let msg = { 'payload': { 'name': calendar.displayName, 'data': [] } }
                   calendarEntries.forEach(function (calendarEntry) {
                     try {
-                      let jCalData = ICAL.parse(calendarEntry.calendarData)
-                      let component = new ICAL.Component(jCalData)
-                      let vevent = component.getFirstSubcomponent('vevent')
-                      var event = new ICAL.Event(vevent)
-                      icsList.payload.data.push(convertEvent(event))
+                      const ics = calendarEntry.calendarData
+                      const icalExpander = new IcalExpander({ ics, maxIterations: 100 })
+                      const events = icalExpander.between(startDate.toDate(), endDate.toDate())
+                      msg.payload.data = msg.payload.data.concat(convertEvents(events))
                     } catch (error) {
                       node.error('Error parsing calendar data: ' + error)
                     }
                   })
-                  savedCalendars[calendar.displayName] = icsList.payload.data
-                  node.context().global.set('owncloud/calendars', savedCalendars)
-                  node.send(icsList)
+                  if (this.saveData) {
+                    this.savedCalendars[calendar.displayName] = msg.payload.data
+                    node.context().global.set('nextcloud/calendars', this.savedCalendars)
+                  }
+                  node.send(msg)
                 }, function () {
                   node.error('Nextcloud:CalDAV -> get ics went wrong.')
                 })
@@ -93,19 +96,35 @@ module.exports = function (RED) {
         })
     })
 
-    function convertEvent (event) {
-      const retVal = {}
-      retVal.start = event.startDate.toString()
-      retVal.end = event.endDate.toString()
-      retVal.summary = event.summary || ''
-      retVal.description = event.description || ''
-      retVal.attendees = event.attendees
-      retVal.duration = event.duration
-      retVal.location = event.location || ''
-      retVal.organizer = event.organizer || ''
-      retVal.uid = event.uid || ''
-      retVal.isRecurring = event.isRecurring()
-      return retVal
+    function convertEvents (events) {
+      // node.warn(events)
+      const mappedEvents = events.events.map(e => ({
+        startDate: e.startDate.toString(),
+        endDate: e.endDate.toString(),
+        summary: e.summary || '',
+        description: e.description || '',
+        attendees: e.attendees,
+        duration: e.duration,
+        location: e.location || '',
+        organizer: e.organizer || '',
+        uid: e.uid || '',
+        isRecurring: false,
+        allDay: (e.duration.toSeconds() === 86400)
+      }))
+      const mappedOccurrences = events.occurrences.map(o => ({
+        startDate: o.startDate.toString(),
+        endDate: o.endDate.toString(),
+        summary: o.item.summary || '',
+        description: o.item.description || '',
+        attendees: o.item.attendees,
+        duration: o.item.duration,
+        location: o.item.location || '',
+        organizer: o.item.organizer || '',
+        uid: o.item.uid || '',
+        isRecurring: true,
+        allDay: (o.item.duration.toSeconds() === 86400)
+      }))
+      return [].concat(mappedEvents, mappedOccurrences)
     }
   }
   RED.nodes.registerType('nextcloud-caldav', NextcloudCalDav)
