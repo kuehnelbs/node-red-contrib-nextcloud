@@ -22,13 +22,10 @@ module.exports = function (RED) {
     this.calendar = config.calendar
     this.pastWeeks = config.pastWeeks || 0
     this.futureWeeks = config.futureWeeks || 4
-    this.saveData = config.saveData || true
-    this.savedCalendars = {}
     const node = this
     node.warn('Node init')
 
     node.on('input', (msg) => {
-      if (this.saveData) this.savedCalendars = this.context().global.get('nextcloud/calendars') || {}
       let startDate = moment().startOf('day').subtract(this.pastWeeks, 'weeks')
       let endDate = moment().endOf('day').add(this.futureWeeks, 'weeks')
       const filters = [{
@@ -81,10 +78,6 @@ module.exports = function (RED) {
                       node.error('Error parsing calendar data: ' + error)
                     }
                   })
-                  if (this.saveData) {
-                    this.savedCalendars[calendar.displayName] = msg.payload.data
-                    node.context().global.set('nextcloud/calendars', this.savedCalendars)
-                  }
                   node.send(msg)
                 }, function () {
                   node.error('Nextcloud:CalDAV -> get ics went wrong.')
