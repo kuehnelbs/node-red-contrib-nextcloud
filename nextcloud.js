@@ -118,7 +118,7 @@ module.exports = function (RED) {
           organizer: e.organizer || '',
           uid: e.uid || '',
           isRecurring: false,
-          allDay: (e.duration.toSeconds() === 86400)
+          allDay: ((e.duration.toSeconds() % 86400) === 0)
         }
       }
     }
