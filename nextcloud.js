@@ -23,7 +23,6 @@ module.exports = function (RED) {
     this.pastWeeks = config.pastWeeks || 0
     this.futureWeeks = config.futureWeeks || 4
     const node = this
-    node.warn('Node init')
 
     node.on('input', (msg) => {
       let startDate = moment().startOf('day').subtract(this.pastWeeks, 'weeks')
@@ -90,34 +89,38 @@ module.exports = function (RED) {
     })
 
     function convertEvents (events) {
-      // node.warn(events)
-      const mappedEvents = events.events.map(e => ({
-        startDate: e.startDate.toString(),
-        endDate: e.endDate.toString(),
-        summary: e.summary || '',
-        description: e.description || '',
-        attendees: e.attendees,
-        duration: e.duration,
-        location: e.location || '',
-        organizer: e.organizer || '',
-        uid: e.uid || '',
-        isRecurring: false,
-        allDay: (e.duration.toSeconds() === 86400)
-      }))
-      const mappedOccurrences = events.occurrences.map(o => ({
-        startDate: o.startDate.toString(),
-        endDate: o.endDate.toString(),
-        summary: o.item.summary || '',
-        description: o.item.description || '',
-        attendees: o.item.attendees,
-        duration: o.item.duration,
-        location: o.item.location || '',
-        organizer: o.item.organizer || '',
-        uid: o.item.uid || '',
-        isRecurring: true,
-        allDay: (o.item.duration.toSeconds() === 86400)
-      }))
+      const mappedEvents = events.events.map(_convertEvent)
+      const mappedOccurrences = events.occurrences.map(_convertEvent)
       return [].concat(mappedEvents, mappedOccurrences)
+    }
+
+    function _convertEvent (e) {
+      if (e) {
+        let startDate = e.startDate.toString()
+        let endDate = e.endDate.toString()
+
+        if (e.item) {
+          e = e.item
+        }
+        if (e.duration.wrappedJSObject) {
+          delete e.duration.wrappedJSObject
+        }
+
+        return {
+          startDate: startDate,
+          endDate: endDate,
+          summary: e.summary || '',
+          description: e.description || '',
+          attendees: e.attendees,
+          duration: e.duration.toICALString(),
+          durationSeconds: e.duration.toSeconds(),
+          location: e.location || '',
+          organizer: e.organizer || '',
+          uid: e.uid || '',
+          isRecurring: false,
+          allDay: (e.duration.toSeconds() === 86400)
+        }
+      }
     }
   }
   RED.nodes.registerType('nextcloud-caldav', NextcloudCalDav)
