@@ -45,7 +45,9 @@
 		defaults: {
             nname: {value: ''},
             server: {type: 'nextcloud-credentials', required: true},
-            calendar: {value: '', required: false}
+            calendar: {value: '', required: false},
+            pastWeeks: { type: 'num', value: 0, required: true},
+            futureWeeks: { type: 'num', default: 4, required: true }
         },
         inputs: 1,
         outputs: 1,
@@ -60,7 +62,7 @@
 <script type="text/x-red" data-template-name="nextcloud-caldav">
     <div class="form-row">
         <label for="node-input-nname"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-nname" placeholder="Name">
+        <input type="text" id="node-input-nname" placeholder="Name"  style="width: 70%">
     </div>
 	<div class="form-row">
     	<label for="node-input-server"><i class="fa fa-server"></i> Server</label>
@@ -69,6 +71,14 @@
 	<div class="form-row">
         <label for="node-input-calendar"><i class="fa fa-calendar"></i> Calendar</label>
         <input type="text" id="node-input-calendar">
+    </div>
+    <div class="form-row">
+        <label for="node-input-pastWeeks"><i class="fa fa-check-square"></i> Past weeks to sync</label>
+        <span class="ui-spinner ui-widget ui-widget-content ui-corner-all"><input type="number" id="node-input-pastWeeks"></span>
+    </div>
+    <div class="form-row">
+        <label for="node-input-futureWeeks"><i class="fa fa-random"></i> Upcoming weeks to sync</label>
+        <span class="ui-spinner ui-widget ui-widget-content ui-corner-all"><input type="number" id="node-input-futureWeeks"></span>
     </div>
 </script>
 
