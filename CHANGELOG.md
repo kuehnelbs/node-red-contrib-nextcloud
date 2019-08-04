@@ -1,11 +1,20 @@
 # node-red-contrib-nextcloud changelog
 
-## 0.1,1
+## 0.1.3
+_2019.08.04_
+* security fixes and package updates
+
+## 0.1.2
 _2018-11-11_
 * merged pull request
  * fixed errors parsing caldav events
  * switched to ical-expander parser
 
+## 0.1.1
+_2018-05-01
+* added checkbox to accept self signed server certificates to credentials
+* added support for self signed certificates to WebDAV nodes (needs [webdav](https://github.com/perry-mitchell/webdav-client) package to be updated to 1.5.3 or newer)
+* removed debug output in node WebDAV list
 
 ## 0.1.0
 _2018-04-30_
