@@ -4,10 +4,12 @@ module.exports = function (RED) {
   const fs = require('fs')
   const IcalExpander = require('ical-expander')
   const moment = require('moment')
+  const https = require('https')
 
   function NextcloudConfigNode (config) {
     RED.nodes.createNode(this, config)
     this.address = config.address
+    this.insecure = n.insecure
   }
   RED.nodes.registerType('nextcloud-credentials', NextcloudConfigNode, {
     credentials: {
@@ -197,7 +199,12 @@ module.exports = function (RED) {
       }
       directory = directory.replace('//', '/')
 
-      client.getDirectoryContents(directory)
+      // check option for self signed certs
+      const option = {}
+      if (node.server.insecure) {
+        option.agent = new https.Agent({ rejectUnauthorized: false })
+      }
+      client.getDirectoryContents(directory, option)
         .then(function (contents) {
           node.send({ 'payload': contents })
         }, function (error) {
@@ -226,8 +233,13 @@ module.exports = function (RED) {
         return
       }
       filename = filename.replace('//', '/')
-      node.warn(filename)
-      client.getFileContents(filename)
+
+      // check option for self signed certs
+      const option = {}
+      if (node.server.insecure) {
+        option.agent = new https.Agent({ rejectUnauthorized: false })
+      }
+      client.getFileContents(filename, option)
         .then(function (contents) {
           node.send({ 'payload': contents })
         }, function (error) {
@@ -264,7 +276,13 @@ module.exports = function (RED) {
       const webDavUri = node.server.address + '/remote.php/webdav/'
       const client = webdav(webDavUri, node.server.credentials.user, node.server.credentials.pass)
 
-      client.putFileContents(directory + name, file, { format: 'binary' })
+      // check option for self signed certs
+      const option = {}
+      if (node.server.insecure) {
+        option.agent = new https.Agent({ rejectUnauthorized: false })
+      }
+
+      client.putFileContents(directory + name, file, { format: 'binary' }, option)
         .then(function (contents) {
           console.log(contents)
           node.send({ 'payload': JSON.parse(contents) })
