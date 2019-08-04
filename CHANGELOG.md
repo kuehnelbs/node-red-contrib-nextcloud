@@ -1,7 +1,7 @@
 # node-red-contrib-nextcloud changelog
 
 ## 0.1.3
-_2019.08.04_
+_2019-08-04_
 * security fixes and package updates
 
 ## 0.1.2
