@@ -9,7 +9,7 @@ module.exports = function (RED) {
   function NextcloudConfigNode (config) {
     RED.nodes.createNode(this, config)
     this.address = config.address
-    this.insecure = n.insecure
+    this.insecure = config.insecure
   }
   RED.nodes.registerType('nextcloud-credentials', NextcloudConfigNode, {
     credentials: {
