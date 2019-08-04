@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-nextcloud",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Collection of node-red nodes to download Calendars (CalDAV) and Contacts (CardDAV) and up- / download / list files (WebDAV) from / to nextcloud",
   "main": "nextcloud.js",
   "node-red": {
